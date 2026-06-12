@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>単元別演習</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+    background: #f5f6f8; color: #222; line-height: 1.7;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 40px 16px;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 6px; }
+  p.sub { color: #777; font-size: 0.85rem; margin-bottom: 30px; }
+  a.app {
+    display: block; width: 100%; max-width: 420px;
+    border-radius: 14px; padding: 22px 20px; margin-bottom: 16px;
+    color: #fff; text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  a.app .t { font-size: 1.1rem; font-weight: 800; }
+  a.app .d { font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }
+  a.jinan { background: #1a3a6b; }
+  a.chojo { background: #0e7c6b; }
+  p.note { color: #999; font-size: 0.72rem; margin-top: 24px; text-align: center; max-width: 420px; }
+</style>
+</head>
+<body>
+<h1>📚 単元別演習</h1>
+<p class="sub">自分のアプリを選んでください</p>
+<a class="app jinan" href="jinan/">
+  <div class="t">一橋・慶應 対策</div>
+  <div class="d">一橋大 / 慶應商 / 慶應経済</div>
+</a>
+<a class="app chojo" href="chojo/">
+  <div class="t">青学・法政 対策</div>
+  <div class="d">青学 国際政経・地球社会共生 / 法政 国際文化・GIS</div>
+</a>
+<p class="note">学習記録は各自のスマホ(ブラウザ)内にのみ保存されます。<br>ブラウザの「ホーム画面に追加」でアプリのように使えます。</p>
+</body>
+</html>
