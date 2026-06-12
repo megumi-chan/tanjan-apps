@@ -226,3 +226,97 @@ window.SUBJECTS = [
     ],
   },
 ];
+
+// ============================================================
+// 直近約10年の入試で出題されたジャンル(傾向の目安)
+// freq: ほぼ毎年 / 頻出 / ときどき
+// qids: 該当する内蔵問題のID(空ならAI生成・手動記録で対応)
+// ※年度ごとの正確な出題は赤本で確認してください。
+// ============================================================
+window.GENRES = {
+  e_reading: [
+    { id: "g_econ", name: "経済・社会科学の長文", freq: "ほぼ毎年", qids: ["er1", "er2", "er4", "er6"] },
+    { id: "g_tech", name: "科学技術・AIと社会", freq: "頻出", qids: ["er3"] },
+    { id: "g_society", name: "都市・環境・社会問題", freq: "頻出", qids: ["er5"] },
+  ],
+  e_summary: [
+    { id: "g_yoyaku", name: "日本語要約(一橋型)", freq: "ほぼ毎年", qids: ["es1", "es2", "es3", "es4"] },
+  ],
+  e_writing: [
+    { id: "g_opinion", name: "意見論述(賛否型)", freq: "ほぼ毎年", qids: ["ew4", "ew5", "ew6"] },
+    { id: "g_wabun", name: "和文英訳", freq: "頻出", qids: ["ew1", "ew2", "ew3"] },
+    { id: "g_photo", name: "写真・状況描写(一橋)", freq: "ときどき", qids: [] },
+  ],
+  m_prob: [
+    { id: "g_njin", name: "n人・n回の一般化(一橋型)", freq: "ほぼ毎年", qids: ["mp2", "mp6"] },
+    { id: "g_count", name: "数え上げ・反復試行", freq: "頻出", qids: ["mp1", "mp3", "mp4"] },
+    { id: "g_cond", name: "条件付き確率", freq: "頻出", qids: ["mp5"] },
+    { id: "g_pzenka", name: "確率漸化式", freq: "頻出", qids: [] },
+  ],
+  m_integer: [
+    { id: "g_amari", name: "余りで分類・合同式", freq: "ほぼ毎年", qids: ["mi1", "mi2"] },
+    { id: "g_futei", name: "不定方程式", freq: "頻出", qids: ["mi3"] },
+    { id: "g_sosu", name: "素数の性質", freq: "頻出", qids: ["mi4"] },
+    { id: "g_yakusu", name: "約数・倍数", freq: "ときどき", qids: ["mi5"] },
+  ],
+  m_calc: [
+    { id: "g_menseki", name: "面積計算", freq: "ほぼ毎年", qids: ["mc2", "mc5", "mc6"] },
+    { id: "g_sessen", name: "接線・極値", freq: "頻出", qids: ["mc1", "mc3"] },
+    { id: "g_kaikosu", name: "解の個数・定数分離", freq: "頻出", qids: ["mc4"] },
+  ],
+  m_seq: [
+    { id: "g_zenka", name: "漸化式", freq: "ほぼ毎年", qids: ["ms1"] },
+    { id: "g_wa", name: "和(Σ)の計算", freq: "頻出", qids: ["ms2"] },
+    { id: "g_ippan", name: "一般項を求める", freq: "頻出", qids: ["ms3", "ms4"] },
+  ],
+  m_zukei: [
+    { id: "g_kiseki", name: "軌跡・領域(一橋頻出)", freq: "ほぼ毎年", qids: ["mz4"] },
+    { id: "g_en", name: "円と直線", freq: "頻出", qids: ["mz1", "mz2", "mz3"] },
+  ],
+  j_hyoron: [
+    { id: "g_kindai", name: "近代論・社会論", freq: "頻出", qids: ["jr1"] },
+    { id: "g_kagaku", name: "科学論・倫理", freq: "頻出", qids: ["jr2"] },
+    { id: "g_gengo", name: "言語論・文化論", freq: "頻出", qids: ["jr3"] },
+  ],
+  w_medieval: [
+    { id: "g_toshi", name: "中世都市・商業(一橋第1問型)", freq: "ほぼ毎年", qids: ["wm2", "wm4"] },
+    { id: "g_kyokai", name: "教会・教皇権・宗教改革", freq: "頻出", qids: ["wm1", "wm5"] },
+    { id: "g_homin", name: "封建制・農民の地位", freq: "頻出", qids: ["wm3"] },
+  ],
+  w_modern_eu: [
+    { id: "g_kakumei", name: "市民革命・国民国家", freq: "ほぼ毎年", qids: ["we2", "we3", "we5"] },
+    { id: "g_sangyo", name: "産業革命", freq: "頻出", qids: ["we1", "we4"] },
+    { id: "g_keishiso", name: "経済思想・経済政策", freq: "頻出", qids: ["we6"] },
+  ],
+  w_modern_asia: [
+    { id: "g_chugoku", name: "中国の近代化(一橋第3問型)", freq: "ほぼ毎年", qids: ["wa2", "wa3", "wa4"] },
+    { id: "g_joyaku", name: "開港・条約体制", freq: "頻出", qids: ["wa1"] },
+    { id: "g_minami", name: "南・東南アジア", freq: "ときどき", qids: ["wa5"] },
+  ],
+  w_contemporary: [
+    { id: "g_reisen", name: "冷戦", freq: "頻出", qids: ["wc2", "wc3"] },
+    { id: "g_kokusaikeizai", name: "国際経済体制(慶應経済型)", freq: "頻出", qids: ["wc1"] },
+    { id: "g_eu", name: "ヨーロッパ統合", freq: "頻出", qids: ["wc4"] },
+  ],
+  n_kinsei: [
+    { id: "g_bakusei", name: "幕政改革", freq: "ほぼ毎年", qids: ["nk1", "nk3", "nk4", "nk5"] },
+    { id: "g_tanuma", name: "田沼政治・経済政策", freq: "頻出", qids: ["nk2"] },
+  ],
+  n_kindai: [
+    { id: "g_zaisei", name: "財政・金融史", freq: "ほぼ毎年", qids: ["nm2", "nm3", "nm6"] },
+    { id: "g_nsangyo", name: "産業革命(日本)", freq: "頻出", qids: ["nm4"] },
+    { id: "g_seiji", name: "政治・社会運動", freq: "頻出", qids: ["nm5"] },
+    { id: "g_tochi", name: "土地制度", freq: "頻出", qids: ["nm1"] },
+  ],
+  n_gendai: [
+    { id: "g_senryo", name: "占領期の改革", freq: "頻出", qids: ["ng1", "ng2"] },
+    { id: "g_kodo", name: "高度経済成長", freq: "頻出", qids: ["ng3", "ng4"] },
+  ],
+  s_keizai: [
+    { id: "g_kakusa", name: "格差・再分配", freq: "頻出", qids: ["ss1"] },
+    { id: "g_gijutsu", name: "技術と社会", freq: "頻出", qids: ["ss2"] },
+    { id: "g_kankyo", name: "環境と経済", freq: "頻出", qids: ["ss3"] },
+    { id: "g_minshu", name: "民主主義", freq: "頻出", qids: ["ss4"] },
+    { id: "g_global", name: "グローバル化", freq: "頻出", qids: ["ss5"] },
+  ],
+};

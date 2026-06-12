@@ -250,12 +250,28 @@
   }
 
   // ---------- 演習 ----------
-  function startSession(unitId) {
+  // 直近約10年の出題ジャンル(data.js の window.GENRES)を取得
+  function findGenre(unitId, genreId) {
+    if (!genreId) return null;
+    var list = (window.GENRES || {})[unitId] || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === genreId) return list[i];
+    }
+    return null;
+  }
+
+  function startSession(unitId, genreId) {
     var x = findUnit(unitId);
     var pool = questionsFor(unitId);
+    var genre = findGenre(unitId, genreId);
+    if (genre) {
+      pool = pool.filter(function (q) {
+        return q.genre === genreId || (genre.qids || []).indexOf(q.id) >= 0;
+      });
+    }
     if (!pool.length) {
-      // 問題バンクのない単元(リスニング等)
-      session = { unit: unitId, noBank: true };
+      // 問題バンクのない単元・ジャンル(リスニング等)
+      session = { unit: unitId, genre: genreId, noBank: true };
       switchTab("practice");
       return;
     }
@@ -277,6 +293,7 @@
     var n = Math.min(state.settings.sessionSize, pool.length);
     session = {
       unit: unitId,
+      genre: genreId,
       queue: pool.slice(0, n),
       idx: 0,
       results: [],
@@ -294,7 +311,7 @@
   }
 
   function renderPracticeMenu() {
-    var card = el('<div class="card"><h2>✏️ 単元を選んで演習</h2></div>');
+    var card = el('<div class="card"><h2>✏️ 単元を選んで演習</h2><div class="muted small">単元の下の小さなボタンは、直近約10年の入試で出題されたジャンルの目安です。タップするとそのジャンルに絞って演習できます。</div></div>');
     visibleSubjects().forEach(function (s) {
       card.appendChild(el('<h3>' + esc(s.name) + "</h3>"));
       s.units.forEach(function (u) {
@@ -309,6 +326,17 @@
         );
         row.querySelector(".prio-go").addEventListener("click", function () { startSession(u.id); });
         card.appendChild(row);
+        var genres = (window.GENRES || {})[u.id] || [];
+        if (genres.length) {
+          var grow = el('<div class="genre-row"></div>');
+          genres.forEach(function (g) {
+            var chip = el('<button class="genre-chip">' + esc(g.name) +
+              (g.freq ? ' <span class="g-freq">' + esc(g.freq) + "</span>" : "") + "</button>");
+            chip.addEventListener("click", function () { startSession(u.id, g.id); });
+            grow.appendChild(chip);
+          });
+          card.appendChild(grow);
+        }
       });
     });
     main.appendChild(card);
@@ -316,11 +344,20 @@
 
   function renderNoBank() {
     var x = findUnit(session.unit);
+    var g = findGenre(session.unit, session.genre);
+    var msg = g
+      ? "このジャンルの内蔵問題はまだ用意されていません。AIで類題を生成する(設定でAPIキー登録時)か、手持ちの過去問・問題集で演習して結果を下から記録してください。"
+      : "この単元は手持ちの教材(音声教材・過去問など)で演習し、結果を下から記録してください。記録は定着度の分析に反映されます。";
     var card = el(
-      '<div class="card"><h2>' + esc(x.unit.name) + "</h2>" +
+      '<div class="card"><h2>' + esc(x.unit.name) + (g ? " / " + esc(g.name) : "") + "</h2>" +
       '<div class="tips-box">' + esc(x.unit.tips || "") + "</div>" +
-      '<p class="small mt12">この単元は手持ちの教材(音声教材・過去問など)で演習し、結果を下から記録してください。記録は定着度の分析に反映されます。</p></div>'
+      '<p class="small mt12">' + msg + "</p></div>"
     );
+    if (g && state.settings.apiKey) {
+      var ai = el('<button class="btn ghost sm">🤖 AIでこのジャンルの類題を1問生成</button>');
+      ai.addEventListener("click", function () { generateAI(session.unit, session.genre, ai); });
+      card.appendChild(ai);
+    }
     main.appendChild(card);
     main.appendChild(buildQuickLogCard(x.sub.id, x.unit.id));
     var back = el('<button class="btn ghost block mt8">単元選択に戻る</button>');
@@ -331,8 +368,10 @@
   function renderQuestion() {
     var q = session.queue[session.idx];
     var x = findUnit(session.unit);
+    var g = findGenre(session.unit, session.genre);
     var card = el('<div class="card"></div>');
     card.appendChild(el('<div class="q-progress">' + esc(x.sub.name) + " / " + esc(x.unit.name) +
+      (g ? " / " + esc(g.name) : "") +
       "  【" + (session.idx + 1) + " / " + session.queue.length + "問】</div>"));
     if (q.passage) card.appendChild(el('<div class="q-passage">' + esc(q.passage) + "</div>"));
     card.appendChild(el('<div class="q-text">' + esc(q.q) + "</div>"));
@@ -380,8 +419,8 @@
 
     // AI類題生成(APIキー設定時のみ)
     if (state.settings.apiKey) {
-      var ai = el('<button class="btn ghost sm">🤖 AIでこの単元の類題を1問追加生成</button>');
-      ai.addEventListener("click", function () { generateAI(session.unit, ai); });
+      var ai = el('<button class="btn ghost sm">🤖 AIでこの' + (g ? "ジャンル" : "単元") + 'の類題を1問追加生成</button>');
+      ai.addEventListener("click", function () { generateAI(session.unit, session.genre, ai); });
       main.appendChild(ai);
     }
   }
@@ -414,9 +453,22 @@
       '<div class="tips-box" style="text-align:left">' + esc(x.unit.tips || "") + "</div></div>"
     );
     main.appendChild(card);
-    var again = el('<button class="btn block">同じ単元をもう一度</button>');
-    again.addEventListener("click", function () { startSession(session.unit); });
+    var again = el('<button class="btn block">同じ' + (session.genre ? "ジャンル" : "単元") + 'をもう一度</button>');
+    again.addEventListener("click", function () { startSession(session.unit, session.genre); });
     main.appendChild(again);
+    var genres = (window.GENRES || {})[session.unit] || [];
+    if (genres.length) {
+      var gc = el('<div class="card mt8"><h2>📌 もっと演習したいジャンルを選ぶ(直近約10年の出題傾向)</h2></div>');
+      var grow = el('<div class="genre-row" style="border-bottom:none"></div>');
+      genres.forEach(function (g) {
+        var chip = el('<button class="genre-chip">' + esc(g.name) +
+          (g.freq ? ' <span class="g-freq">' + esc(g.freq) + "</span>" : "") + "</button>");
+        chip.addEventListener("click", function () { startSession(session.unit, g.id); });
+        grow.appendChild(chip);
+      });
+      gc.appendChild(grow);
+      main.appendChild(gc);
+    }
     var auto = el('<button class="btn ghost block mt8">おまかせで次の優先単元へ</button>');
     auto.addEventListener("click", function () {
       session = null;
@@ -650,8 +702,9 @@
   }
 
   // ---------- AI類題生成 ----------
-  function generateAI(unitId, btn) {
+  function generateAI(unitId, genreId, btn) {
     var x = findUnit(unitId);
+    var g = findGenre(unitId, genreId);
     btn.disabled = true;
     btn.textContent = "🤖 生成中…(10秒ほど)";
     var sys = "あなたは日本の大学受験の作問者です。指定された科目・単元の演習問題を1問だけ作り、次のJSON形式のみで出力してください(前後の文章は一切不要): " +
@@ -659,7 +712,9 @@
       "answerは正解選択肢の番号(0始まり)。記述式が適切な場合は " +
       '{"type":"free","q":"問題文","answer":"模範解答","expl":"解説"} ' +
       "の形式。難易度は" + window.UNIVERSITIES.map(function (u) { return u.name; }).join("・") + "の入試レベル。";
-    var user = "科目: " + x.sub.name + "\n単元: " + x.unit.name + "\n傾向: " + (x.unit.tips || "") + "\n1問作成してください。";
+    var user = "科目: " + x.sub.name + "\n単元: " + x.unit.name +
+      (g ? "\nジャンル: " + g.name + "(このジャンルに絞った問題にすること)" : "") +
+      "\n傾向: " + (x.unit.tips || "") + "\n1問作成してください。";
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -684,11 +739,16 @@
       var q = JSON.parse(m[0]);
       q.id = "ai_" + Date.now();
       q.unit = unitId;
+      if (genreId) q.genre = genreId;
       state.custom.push(q);
       save();
-      if (session && session.unit === unitId) {
+      if (session && session.queue && session.unit === unitId) {
         session.queue.push(q);
         alert("類題を1問追加しました!このセッションの最後に出題されます。");
+      } else if (session && session.noBank && session.unit === unitId) {
+        alert("類題を1問追加しました!そのまま演習を始めます。");
+        startSession(unitId, genreId);
+        return;
       } else {
         alert("類題を1問追加しました!");
       }

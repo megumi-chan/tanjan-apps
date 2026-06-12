@@ -164,3 +164,76 @@ window.SUBJECTS = [
     ],
   },
 ];
+
+// ============================================================
+// 直近約10年の入試で出題されたジャンル(傾向の目安)
+// freq: ほぼ毎年 / 頻出 / ときどき
+// qids: 該当する内蔵問題のID(空ならAI生成・手動記録で対応)
+// ※年度ごとの正確な出題は赤本で確認してください。
+// ============================================================
+window.GENRES = {
+  e_reading: [
+    { id: "g_ibunka", name: "異文化理解・言語", freq: "ほぼ毎年", qids: ["er1", "er3", "er5"] },
+    { id: "g_kokusai", name: "国際社会・時事", freq: "ほぼ毎年", qids: ["er4", "er6", "er7"] },
+    { id: "g_kankyo", name: "環境・観光", freq: "頻出", qids: ["er2"] },
+  ],
+  e_seijo: [
+    { id: "g_kobun2", name: "構文・倒置・仮定法", freq: "頻出", qids: ["es4", "es6", "es8"] },
+    { id: "g_jukugo", name: "熟語・語法", freq: "頻出", qids: ["es1", "es2", "es5"] },
+    { id: "g_hikaku", name: "比較・倍数表現", freq: "頻出", qids: ["es3", "es7"] },
+  ],
+  e_conv: [
+    { id: "g_teikei", name: "依頼・提案の定型表現", freq: "頻出", qids: ["ec1", "ec4", "ec5"] },
+    { id: "g_kogo", name: "口語イディオム", freq: "頻出", qids: ["ec2", "ec3", "ec6"] },
+    { id: "g_bamen", name: "電話・再会など場面別", freq: "頻出", qids: ["ec7", "ec8"] },
+  ],
+  e_writing: [
+    { id: "g_opinion", name: "意見論述", freq: "頻出", qids: ["ew2", "ew3"] },
+    { id: "g_wabun", name: "和文英訳", freq: "ときどき", qids: ["ew1"] },
+  ],
+  j_hyoron: [
+    { id: "g_bunka", name: "文化論・グローバル化", freq: "頻出", qids: ["jr1"] },
+    { id: "g_gengo", name: "言語・翻訳論", freq: "頻出", qids: ["jr2"] },
+    { id: "g_shakai", name: "社会・人間関係", freq: "頻出", qids: ["jr3"] },
+    { id: "g_zuihitsu", name: "随筆(旅・日常)", freq: "頻出", qids: ["jr4"] },
+  ],
+  j_kodokkai: [
+    { id: "g_monogatari", name: "物語・説話", freq: "頻出", qids: ["jd1", "jd2", "jd3"] },
+  ],
+  w_kodai: [
+    { id: "g_orient", name: "オリエント", freq: "頻出", qids: ["wk1"] },
+    { id: "g_girisha", name: "ギリシア・ヘレニズム", freq: "頻出", qids: ["wk2"] },
+    { id: "g_roma", name: "ローマ", freq: "頻出", qids: ["wk3"] },
+  ],
+  w_chukinsei: [
+    { id: "g_jujigun", name: "十字軍・教会", freq: "頻出", qids: ["wc1"] },
+    { id: "g_runesansu", name: "ルネサンス・宗教改革", freq: "頻出", qids: ["wc2"] },
+    { id: "g_daikokai", name: "大航海時代", freq: "頻出", qids: ["wc3"] },
+  ],
+  w_kindai: [
+    { id: "g_kakumei", name: "市民革命", freq: "ほぼ毎年", qids: ["wn1", "wn2"] },
+    { id: "g_teikoku", name: "帝国主義・アフリカ分割", freq: "頻出", qids: ["wn3"] },
+  ],
+  w_gendai: [
+    { id: "g_kokuren", name: "国際機構(連盟・国連)", freq: "頻出", qids: ["wg1"] },
+    { id: "g_reisen", name: "冷戦", freq: "頻出", qids: ["wg2"] },
+  ],
+  w_asia: [
+    { id: "g_chugokuseido", name: "中国の制度史(科挙など)", freq: "頻出", qids: ["wa1"] },
+  ],
+  n_kochusei: [
+    { id: "g_kodaiseiji", name: "古代の政治", freq: "頻出", qids: ["nj1"] },
+    { id: "g_buke", name: "武家政権の成立・戦乱", freq: "頻出", qids: ["nj2", "nj3"] },
+  ],
+  n_kinsei: [
+    { id: "g_bakufu", name: "幕府の支配体制", freq: "頻出", qids: ["nj4"] },
+    { id: "g_taigai", name: "対外関係(鎖国)", freq: "頻出", qids: ["nj5"] },
+  ],
+  n_kindai: [
+    { id: "g_joyaku", name: "条約改正・外交", freq: "ほぼ毎年", qids: ["nj6", "nj8"] },
+    { id: "g_kenpo", name: "憲法・政治制度", freq: "頻出", qids: ["nj7"] },
+  ],
+  n_gendai: [
+    { id: "g_sengogaiko", name: "戦後外交(国際系頻出)", freq: "ほぼ毎年", qids: ["nj9", "nj10"] },
+  ],
+};

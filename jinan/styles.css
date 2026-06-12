@@ -275,6 +275,32 @@ textarea { min-height: 70px; }
   white-space: pre-wrap;
 }
 
+/* 出題ジャンル選択チップ */
+.genre-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 8px 12px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.genre-chip {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: none;
+  border-radius: 14px;
+  padding: 6px 11px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.genre-chip:hover { background: var(--accent); color: #fff; }
+.genre-chip .g-freq {
+  font-size: 0.62rem;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
 .divider { height: 1px; background: var(--border); margin: 12px 0; }
 .center { text-align: center; }
 .mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; }
