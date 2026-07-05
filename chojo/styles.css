@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --accent: #1a3a6b;
   --accent-light: #2d5aa0;
   --accent-bg: #eaf0f9;
@@ -305,14 +305,15 @@ textarea { min-height: 70px; }
 .center { text-align: center; }
 .mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; }
 
-/* ブランド表示(ヘッダー右上) */
+/* ブランド表示(タイトルの右横) */
+#appHeader h1 { display: inline-block; }
 #appBrand {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  display: inline-block;
+  margin-left: 10px;
   font-size: 0.68rem;
   opacity: 0.85;
   font-weight: 600;
   letter-spacing: 0.5px;
+  vertical-align: 2px;
 }
+
