@@ -102,7 +102,72 @@
   function stopSpeech() {
     speaking = false;
     if (synth) synth.cancel();
+    if (audioEl) { audioSeq = null; audioEl.pause(); }
     updatePlayingUI(false);
+  }
+
+  // ---------- ネイティブ音声ファイル再生(MP3・倍速対応) ----------
+  // 事前生成したニューラル音声を再生。ファイルがない場合はTTSに自動フォールバック。
+  var audioEl = null;
+  var audioSeq = null;
+
+  function isPlaying() {
+    return speaking || audioSeq !== null;
+  }
+  function ensureAudioEl() {
+    if (audioEl) return;
+    audioEl = new Audio();
+    audioEl.addEventListener("ended", function () {
+      if (!audioSeq) return;
+      audioSeq.idx++;
+      setTimeout(playNextFile, 350);
+    });
+    audioEl.addEventListener("error", function () {
+      var seq = audioSeq;
+      audioSeq = null;
+      updatePlayingUI(false);
+      if (seq && seq.fallback) seq.fallback();
+    });
+  }
+  function playFiles(files, onEnd, fallback) {
+    ensureAudioEl();
+    stopSpeech();
+    audioSeq = { files: files, idx: 0, onEnd: onEnd, fallback: fallback };
+    updatePlayingUI(true);
+    playNextFile();
+  }
+  function playNextFile() {
+    if (!audioSeq) return;
+    if (audioSeq.idx >= audioSeq.files.length) {
+      var cb = audioSeq.onEnd;
+      audioSeq = null;
+      updatePlayingUI(false);
+      if (cb) cb();
+      return;
+    }
+    var f = audioSeq.files[audioSeq.idx];
+    audioEl.src = f.src;
+    audioEl.playbackRate = f.rate || 1.0;
+    audioEl.onloadedmetadata = function () { audioEl.playbackRate = f.rate || 1.0; };
+    audioEl.play().catch(function () {
+      var seq = audioSeq;
+      audioSeq = null;
+      updatePlayingUI(false);
+      if (seq && seq.fallback) seq.fallback();
+    });
+  }
+  function playScriptAudio(qid, script, rate, q) {
+    var files = script.map(function (_, i) {
+      return { src: "audio/" + qid + "_s" + i + ".mp3", rate: rate };
+    });
+    playFiles(files, null, function () { speak(scriptParts(q, rate)); });
+  }
+  function playExplAudio(q, correct, onEnd) {
+    var files = [
+      { src: "audio/" + q.id + "_key.mp3", rate: 0.85 },
+      { src: "audio/" + q.id + "_expl.mp3", rate: 1.0 },
+    ];
+    playFiles(files, onEnd, function () { speak(explParts(q, correct), onEnd); });
   }
   function updatePlayingUI(on) {
     var lab = document.querySelector(".play-label");
@@ -400,12 +465,12 @@
     );
     var playBtn = player.querySelector(".play-btn");
     playBtn.addEventListener("click", function () {
-      if (speaking) { stopSpeech(); return; }
+      if (isPlaying()) { stopSpeech(); return; }
       if (blk.playsUsed >= blk.plays) return;
       blk.playsUsed++;
       player.querySelector(".pleft").textContent = blk.plays - blk.playsUsed;
       if (blk.playsUsed >= blk.plays) playBtn.disabled = true;
-      speak(scriptParts({ script: blk.script }, p.rate));
+      playScriptAudio(blk.questions[0].id, blk.script, p.rate, { script: blk.script });
     });
     var speedRow = player.querySelector(".speed-row");
     SPEEDS.forEach(function (s) {
@@ -459,8 +524,8 @@
         ));
         var eb = el('<button class="btn ghost sm mt8">🔊 この問題の解説を音声で聞く</button>');
         eb.addEventListener("click", function () {
-          if (speaking) { stopSpeech(); return; }
-          speak(explParts(q, correct));
+          if (isPlaying()) { stopSpeech(); return; }
+          playExplAudio(q, correct, null);
         });
         qBox.appendChild(eb);
       }
@@ -635,10 +700,10 @@
     var pcount = player.querySelector(".pcount");
     var plays = 0;
     playBtn.addEventListener("click", function () {
-      if (speaking) { stopSpeech(); return; }
+      if (isPlaying()) { stopSpeech(); return; }
       plays++;
       pcount.textContent = plays;
-      speak(scriptParts(q, p.rate));
+      playScriptAudio(q.id, q.script, p.rate, q);
     });
     var speedRow = player.querySelector(".speed-row");
     SPEEDS.forEach(function (s) {
@@ -704,9 +769,9 @@
     // 音声の解説
     var explBtn = el('<button class="btn ghost block mt8">🔊 解説を音声で聞く</button>');
     explBtn.addEventListener("click", function () {
-      if (speaking) { stopSpeech(); explBtn.textContent = "🔊 解説を音声で聞く"; return; }
+      if (isPlaying()) { stopSpeech(); explBtn.textContent = "🔊 解説を音声で聞く"; return; }
       explBtn.textContent = "⏹ 停止する";
-      speak(explParts(q, correct), function () { explBtn.textContent = "🔊 解説を音声で聞く"; });
+      playExplAudio(q, correct, function () { explBtn.textContent = "🔊 解説を音声で聞く"; });
     });
     card.appendChild(explBtn);
 
@@ -831,13 +896,15 @@
     main.appendChild(sc);
 
     // 音声テスト
-    var tc = el('<div class="card"><h2>🔊 音声テスト</h2><div class="muted small">聞こえない場合は端末の消音(マナー)モードと音量を確認してください。iPhoneは「設定→アクセシビリティ→読み上げコンテンツ→声」で高品質な英語音声を追加できます。</div></div>');
-    var tb = el('<button class="btn ghost sm mt8">テスト再生(英語+日本語)</button>');
+    var tc = el('<div class="card"><h2>🔊 音声テスト</h2><div class="muted small">問題音声はネイティブ品質の音声ファイルで再生されます。聞こえない場合は端末の消音(マナー)モードと音量を確認してください。</div></div>');
+    var tb = el('<button class="btn ghost sm mt8">テスト再生(ネイティブ音声)</button>');
     tb.addEventListener("click", function () {
-      speak([
-        { lang: "en", text: "Hello! This is a listening test.", rate: p.rate },
-        { lang: "ja", text: "こんにちは。音声テストです。", rate: 1.0 },
-      ]);
+      if (isPlaying()) { stopSpeech(); return; }
+      playFiles(
+        [{ src: "audio/y21_1_s0.mp3", rate: p.rate }],
+        null,
+        function () { speak([{ lang: "en", text: "Hello! This is a listening test.", rate: p.rate }]); }
+      );
     });
     tc.appendChild(tb);
     main.appendChild(tc);
