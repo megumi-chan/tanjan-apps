@@ -304,3 +304,15 @@ textarea { min-height: 70px; }
 .divider { height: 1px; background: var(--border); margin: 12px 0; }
 .center { text-align: center; }
 .mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; }
+
+/* ブランド表示(ヘッダー右上) */
+#appBrand {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem;
+  opacity: 0.85;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
