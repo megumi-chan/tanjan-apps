@@ -222,6 +222,7 @@
     stopSpeech();
     main.innerHTML = "";
     if (!state.current) { renderProfileGate(); return; }
+    if (session && session.mode === "mock") { renderMock(); return; }
     if (session) { renderQuestionOrResult(); return; }
     if (currentTab === "home") renderHome();
     else if (currentTab === "years") renderYears();
@@ -297,17 +298,249 @@
   }
 
   // ---------- ① 年度別 ----------
+  function mockBest(y) {
+    var ms = (prof().mocks || []).filter(function (m) { return m.year === y; });
+    if (!ms.length) return null;
+    return Math.max.apply(null, ms.map(function (m) { return m.score; }));
+  }
   function renderYears() {
-    var card = el('<div class="card"><h2>📅 年度別 本番形式演習(2016〜2025)</h2><div class="muted small">各年度の出題形式を再現したオリジナル問題セット(8問)です。実際の過去問は著作権のため収録できないので、形式・難易度を忠実に再現した類題で構成しています。本番の過去問は「共通テスト過去問研究」等の問題集で演習してください。</div></div>');
+    var card = el('<div class="card"><h2>📅 年度別 本番形式模試(100点満点)</h2><div class="muted small">2021〜2025年度は本番と同じ37問・100点満点・同じ配点の模試です。再生回数も本番と同じ(第1・2問=2回まで、第3問以降=1回のみ)。難易度は5年分とも共通テスト標準レベルに統一してあるので、得点が本番の目安になります。※実際の過去問は著作権のため収録できず、形式・難易度を再現したオリジナル問題です。</div></div>');
     var grid = el('<div class="year-grid mt12"></div>');
     YEARS.slice().reverse().forEach(function (yy) {
-      var best = yearBest(yy.y);
-      var b = el('<button class="year-card"><div class="y">' + yy.y + '年度</div><div class="y-style">' + esc(yy.style) + '</div><div class="y-best">' + (best === null ? '<span class="muted">未挑戦</span>' : "正答率 " + best + "%") + "</div></button>");
-      b.addEventListener("click", function () { startYear(yy.y); });
+      var isMock = !!(window.MOCK_TESTS || {})[yy.y];
+      var b;
+      if (isMock) {
+        var best = mockBest(yy.y);
+        b = el('<button class="year-card"><div class="y">' + yy.y + '年度</div><div class="y-style">本番形式模試 37問・100点</div><div class="y-best">' + (best === null ? '<span class="muted">未挑戦</span>' : "最高 <b>" + best + "点</b>") + "</div></button>");
+        b.addEventListener("click", function () {
+          if (confirm(yy.y + "年度 本番形式模試を始めます。\n・37問/100点満点(約30分)\n・第1・2問は2回まで、第3問以降は1回しか再生できません(本番と同じ)\n・静かな場所で、メモ用紙を用意して始めるのがおすすめです")) startMock(yy.y);
+        });
+      } else {
+        var best2 = yearBest(yy.y);
+        b = el('<button class="year-card"><div class="y">' + yy.y + '年度</div><div class="y-style">' + esc(yy.style) + ' ミニ演習(8問)</div><div class="y-best">' + (best2 === null ? '<span class="muted">未挑戦</span>' : "正答率 " + best2 + "%") + "</div></button>");
+        b.addEventListener("click", function () { startYear(yy.y); });
+      }
       grid.appendChild(b);
     });
     card.appendChild(grid);
     main.appendChild(card);
+  }
+
+  // ---------- 本番形式模試(37問・100点) ----------
+  // 選択肢をシャッフル(正解番号が偏らないように)。fix:true の問題は順序固定。
+  function shuffledQ(q) {
+    if (q.fix) return q;
+    var order = q.choices.map(function (_, i) { return i; });
+    for (var i = order.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+    }
+    var nq = {};
+    for (var k in q) nq[k] = q[k];
+    nq.choices = order.map(function (i2) { return q.choices[i2]; });
+    nq.answer = order.indexOf(q.answer);
+    return nq;
+  }
+
+  function mockBlocks(year) {
+    var mt = (window.MOCK_TESTS || {})[year];
+    if (!mt) return null;
+    var blocks = [];
+    var no = 1;
+    mt.sections.forEach(function (sec) {
+      sec.blocks.forEach(function (b, bi) {
+        var blk = { sec: sec.name, intro: bi === 0 ? sec.intro : "", plays: sec.plays, unit: sec.unit, playsUsed: 0, graded: false, sel: [] };
+        if (b.ref) {
+          var it = BANK.filter(function (q) { return q.id === b.ref; })[0];
+          blk.script = it.script;
+          blk.table = it.table || null;
+          blk.questions = [shuffledQ({ id: it.id, q: it.q, choices: it.choices, answer: it.answer, keyEn: it.keyEn, keyJa: it.keyJa, expl: it.expl, points: sec.points })];
+        } else {
+          blk.script = b.script;
+          blk.table = b.table || null;
+          blk.questions = b.questions.map(function (q) {
+            return shuffledQ({ id: q.id, q: q.q, choices: q.choices, answer: q.answer, keyEn: q.keyEn, keyJa: q.keyJa, expl: q.expl, points: q.points || sec.points, fix: q.fix });
+          });
+        }
+        blk.startNo = no;
+        no += blk.questions.length;
+        blocks.push(blk);
+      });
+    });
+    return { blocks: blocks, totalQ: no - 1 };
+  }
+
+  function startMock(year) {
+    stopSpeech();
+    var mb = mockBlocks(year);
+    if (!mb) return;
+    session = { mode: "mock", year: year, blocks: mb.blocks, totalQ: mb.totalQ, bIdx: 0, score: 0, secScores: {}, startT: Date.now() };
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  function renderMock() {
+    if (session.bIdx >= session.blocks.length) { renderMockResult(); return; }
+    var blk = session.blocks[session.bIdx];
+    var p = prof();
+    var endNo = blk.startNo + blk.questions.length - 1;
+    var card = el('<div class="card"></div>');
+    card.appendChild(el('<div class="q-progress">' + session.year + "年度模試 【" + esc(blk.sec) + " 問" + blk.startNo + (endNo > blk.startNo ? "〜" + endNo : "") + " / 全" + session.totalQ + "問】</div>"));
+    if (blk.intro) card.appendChild(el('<div class="sec-intro">' + esc(blk.intro) + "</div>"));
+
+    // プレーヤー(再生回数制限つき)
+    var left = blk.plays - blk.playsUsed;
+    var player = el(
+      '<div class="player">' +
+      '<button class="play-btn"' + (left <= 0 ? " disabled" : "") + ">▶</button>" +
+      '<div class="play-label">タップして再生</div>' +
+      '<div class="speed-row"></div>' +
+      '<div class="plays-left mt8">残り再生回数: <b class="pleft">' + left + "</b>回(本番と同じ制限)</div>" +
+      "</div>"
+    );
+    var playBtn = player.querySelector(".play-btn");
+    playBtn.addEventListener("click", function () {
+      if (speaking) { stopSpeech(); return; }
+      if (blk.playsUsed >= blk.plays) return;
+      blk.playsUsed++;
+      player.querySelector(".pleft").textContent = blk.plays - blk.playsUsed;
+      if (blk.playsUsed >= blk.plays) playBtn.disabled = true;
+      speak(scriptParts({ script: blk.script }, p.rate));
+    });
+    var speedRow = player.querySelector(".speed-row");
+    SPEEDS.forEach(function (s) {
+      var chip = el('<button class="speed-chip' + (Math.abs(p.rate - s) < 0.01 ? " on" : "") + '">' + s.toFixed(1) + "倍</button>");
+      chip.addEventListener("click", function () {
+        p.rate = s;
+        save();
+        speedRow.querySelectorAll(".speed-chip").forEach(function (c) { c.classList.remove("on"); });
+        chip.classList.add("on");
+      });
+      speedRow.appendChild(chip);
+    });
+    card.appendChild(player);
+
+    if (blk.table) {
+      var t = '<table class="qtable">';
+      blk.table.forEach(function (row, i) {
+        t += "<tr>" + row.map(function (c) { return (i === 0 ? "<th>" : "<td>") + esc(c) + (i === 0 ? "</th>" : "</td>"); }).join("") + "</tr>";
+      });
+      t += "</table>";
+      card.appendChild(el(t));
+    }
+
+    // 設問(ブロック内の全問を表示)
+    blk.questions.forEach(function (q, qi) {
+      var qBox = el('<div class="mock-q"></div>');
+      qBox.appendChild(el('<div class="mock-qtext">問' + (blk.startNo + qi) + "(" + q.points + "点) " + esc(q.q) + "</div>"));
+      q.choices.forEach(function (c, ci) {
+        var btn = el('<button class="choice">' + "①②③④⑤⑥"[ci] + " " + esc(c) + "</button>");
+        if (blk.graded) {
+          btn.disabled = true;
+          if (ci === q.answer) btn.classList.add("correct");
+          if (blk.sel[qi] === ci && ci !== q.answer) btn.classList.add("wrong");
+        } else {
+          if (blk.sel[qi] === ci) btn.classList.add("sel");
+          btn.addEventListener("click", function () {
+            blk.sel[qi] = ci;
+            qBox.querySelectorAll(".choice").forEach(function (b, bi2) {
+              b.classList.toggle("sel", bi2 === ci);
+            });
+            updateGradeBtn();
+          });
+        }
+        qBox.appendChild(btn);
+      });
+      if (blk.graded) {
+        var correct = blk.sel[qi] === q.answer;
+        qBox.appendChild(el(
+          '<div class="expl"><span class="expl-label">' + (correct ? "○ 正解(+" + q.points + "点) " : "✕ 不正解 ") + "解説</span>\n" +
+          "🔑 " + esc(q.keyEn) + "\n(" + esc(q.keyJa) + ")\n\n" + esc(q.expl) + "</div>"
+        ));
+        var eb = el('<button class="btn ghost sm mt8">🔊 この問題の解説を音声で聞く</button>');
+        eb.addEventListener("click", function () {
+          if (speaking) { stopSpeech(); return; }
+          speak(explParts(q, correct));
+        });
+        qBox.appendChild(eb);
+      }
+      card.appendChild(qBox);
+    });
+
+    if (!blk.graded) {
+      var gradeBtn = el('<button class="btn block mt12" disabled>採点する(全問選択後に押せます)</button>');
+      gradeBtn.addEventListener("click", function () {
+        stopSpeech();
+        blk.graded = true;
+        blk.questions.forEach(function (q, qi) {
+          var correct = blk.sel[qi] === q.answer;
+          if (correct) session.score += q.points;
+          if (!session.secScores[blk.sec]) session.secScores[blk.sec] = { got: 0, max: 0 };
+          session.secScores[blk.sec].got += correct ? q.points : 0;
+          session.secScores[blk.sec].max += q.points;
+          prof().records.push({ t: Date.now(), qid: q.id, unit: blk.unit, year: session.year, r: correct ? 1 : 0, mode: "mock" });
+        });
+        save();
+        render();
+        window.scrollTo(0, 0);
+      });
+      card.appendChild(gradeBtn);
+    } else {
+      var next = el('<button class="btn block mt12">' + (session.bIdx + 1 >= session.blocks.length ? "結果を見る ▶" : "次へ ▶") + "</button>");
+      next.addEventListener("click", function () {
+        stopSpeech();
+        session.bIdx++;
+        render();
+        window.scrollTo(0, 0);
+      });
+      card.appendChild(next);
+    }
+    main.appendChild(card);
+
+    function updateGradeBtn() {
+      var gb = card.querySelector(".btn.block");
+      if (!gb) return;
+      var all = blk.questions.every(function (q, qi) { return blk.sel[qi] !== undefined; });
+      gb.disabled = !all;
+      if (all) gb.textContent = "採点する";
+    }
+  }
+
+  function renderMockResult() {
+    var score = session.score;
+    var mins = Math.round((Date.now() - session.startT) / 60000);
+    if (!session.saved) {
+      session.saved = true;
+      if (!prof().mocks) prof().mocks = [];
+      prof().mocks.push({ t: Date.now(), year: session.year, score: score });
+      save();
+    }
+    var msg = score >= 85 ? "本番でも上位レベル!この調子で他年度も満点を狙おう。"
+      : score >= 70 ? "安定して7割超え。落とした大問を形式別演習で潰せば80点台が見えます。"
+        : score >= 50 ? "共通テストの平均点前後です。配点の大きい第1・2問(計41点)を確実に取る練習から始めよう。"
+          : "まずは第1・2問(2回聞ける問題・計41点)を得点源に。形式別演習でゆっくり型を身につけてから再挑戦を。";
+    var card = el(
+      '<div class="card center"><h2>📋 ' + session.year + "年度 本番形式模試の結果</h2>" +
+      '<div class="result-big">' + score + " <span style='font-size:1rem'>/ 100点</span></div>" +
+      '<div class="small">所要時間: 約' + mins + "分</div>" +
+      '<p class="small mt12">' + msg + "</p></div>"
+    );
+    var t = '<table class="qtable"><tr><th>大問</th><th>得点</th></tr>';
+    Object.keys(session.secScores).forEach(function (sec) {
+      var s = session.secScores[sec];
+      t += "<tr><td>" + esc(sec) + "</td><td>" + s.got + " / " + s.max + "</td></tr>";
+    });
+    t += "</table>";
+    card.appendChild(el(t));
+    main.appendChild(card);
+
+    var drill = el('<button class="btn block">🔥 弱点特訓で苦手形式を潰す</button>');
+    drill.addEventListener("click", function () { session = null; startDrill(); });
+    main.appendChild(drill);
+    var home = el('<button class="btn ghost block mt8">ホームに戻る</button>');
+    home.addEventListener("click", function () { session = null; switchTab("home"); });
+    main.appendChild(home);
+    session.bIdx = session.blocks.length;
   }
 
   // ---------- 形式別 ----------
@@ -557,6 +790,19 @@
       card.appendChild(row);
     });
     main.appendChild(card);
+
+    // 模試の得点推移(本番100点満点の目安)
+    var mocks = (prof().mocks || []).slice().sort(function (a, b) { return b.t - a.t; });
+    var mc = el('<div class="card"><h2>🎯 本番形式模試の得点(100点満点)</h2><div class="muted small">本番でどのくらい取れるかの目安です。同じ年度は繰り返すほど覚えてしまうので、初回の点数を目安にしてください。</div></div>');
+    if (!mocks.length) {
+      mc.appendChild(el('<p class="muted small mt8">まだ模試の記録がありません。「年度別」タブから挑戦してみましょう。</p>'));
+    } else {
+      mocks.slice(0, 15).forEach(function (m) {
+        var d = new Date(m.t);
+        mc.appendChild(el('<div class="log-item"><span class="log-date">' + (d.getMonth() + 1) + "/" + d.getDate() + "</span> " + m.year + "年度 — <b>" + m.score + "点</b> / 100点</div>"));
+      });
+    }
+    main.appendChild(mc);
 
     var yc = el('<div class="card"><h2>📅 年度別の通算正答率</h2></div>');
     YEARS.slice().reverse().forEach(function (yy) {
