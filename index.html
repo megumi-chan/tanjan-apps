@@ -25,6 +25,13 @@
   a.jinan { background: #1a3a6b; }
   a.chojo { background: #0e7c6b; }
   a.listening { background: #7b3fa0; }
+  a.joho { background: #0b7285; }
+  a.seibutsu { background: #2f9e44; }
+  a.chigaku { background: #b5651d; }
+  a.rinri { background: #5f3dc4; }
+  .sec { width: 100%; max-width: 420px; font-size: 0.78rem; font-weight: 700; color: #888;
+    margin: 14px 2px 10px; padding-top: 8px; border-top: 1px solid #e3e5e8; }
+  .sec:first-of-type { border-top: none; padding-top: 0; }
   p.note { color: #999; font-size: 0.72rem; margin-top: 24px; text-align: center; max-width: 420px; }
   .brand { font-size: 0.72rem; color: #888; font-weight: 700; letter-spacing: 0.5px; margin-left: 8px; }
 </style>
@@ -32,6 +39,8 @@
 <body>
 <h1>📚 単元別演習<span class="brand">めーちゃんカンパニー</span></h1>
 <p class="sub">自分のアプリを選んでください</p>
+
+<div class="sec">志望校対策</div>
 <a class="app jinan" href="jinan/">
   <div class="t">一橋・慶應 対策</div>
   <div class="d">一橋大 / 慶應商 / 慶應経済</div>
@@ -40,10 +49,29 @@
   <div class="t">青学・法政 対策</div>
   <div class="d">青学 国際政経・地球社会共生 / 法政 国際文化・GIS</div>
 </a>
+
+<div class="sec">共通テスト対策</div>
 <a class="app listening" href="listening/">
-  <div class="t">🎧 リスニング(2人共通)</div>
-  <div class="d">共通テスト英語リスニング / 年度別・弱点特訓・倍速再生</div>
+  <div class="t">🎧 英語リスニング</div>
+  <div class="d">年度別本番形式模試・弱点特訓・倍速再生</div>
 </a>
+<a class="app joho" href="joho/">
+  <div class="t">💻 情報Ⅰ</div>
+  <div class="d">分野別・本番形式模試(プログラミング/データ活用ほか)</div>
+</a>
+<a class="app seibutsu" href="seibutsu/">
+  <div class="t">🧬 生物基礎</div>
+  <div class="d">分野別・本番形式模試(50点満点)・弱点特訓</div>
+</a>
+<a class="app chigaku" href="chigaku/">
+  <div class="t">🌏 地学基礎</div>
+  <div class="d">分野別・本番形式模試(50点満点)・弱点特訓</div>
+</a>
+<a class="app rinri" href="rinri/">
+  <div class="t">📖 倫理</div>
+  <div class="d">分野別・本番形式模試(100点満点)・弱点特訓</div>
+</a>
+
 <p class="note">学習記録は各自のスマホ(ブラウザ)内にのみ保存されます。<br>ブラウザの「ホーム画面に追加」でアプリのように使えます。</p>
 </body>
 </html>
