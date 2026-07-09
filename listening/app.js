@@ -627,12 +627,12 @@
 
   // ---------- セッション開始 ----------
   function startYear(y) {
-    var pool = BANK.filter(function (q) { return q.year === y; });
+    var pool = BANK.filter(function (q) { return q.year === y; }).map(shuffledQ);
     session = { mode: "year", year: y, queue: pool, idx: 0, results: [], answered: false };
     beginSession();
   }
   function startUnit(unitId) {
-    var pool = sortForServing(questionsFor(unitId)).slice(0, 5);
+    var pool = sortForServing(questionsFor(unitId)).slice(0, 5).map(shuffledQ);
     session = { mode: "unit", unit: unitId, queue: pool, idx: 0, results: [], answered: false };
     beginSession();
   }
@@ -651,7 +651,7 @@
       });
       if (pool.length) {
         session.unitIdx = ui;
-        return pool[0];
+        return shuffledQ(pool[0]);
       }
     }
     return null;
