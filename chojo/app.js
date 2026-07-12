@@ -196,6 +196,13 @@
       '</div></div>'
     ));
 
+    // 共通テスト リスニングへの導線
+    main.appendChild(el(
+      '<div class="card"><h2>🎧 共通テスト リスニング</h2>' +
+      '<div class="muted small">本番形式＋難化版(全10年・各37問・音声つき)。学習者を選んで演習できます。</div>' +
+      '<a class="btn block mt8" href="../listening/" style="text-decoration:none">リスニング演習へ ▶</a></div>'
+    ));
+
     // 受験校
     var ids = enabledUnivIds();
     var tags = UNIVS.filter(function (u) { return ids.indexOf(u.id) >= 0; })
