@@ -363,6 +363,10 @@
   }
 
   // ---------- ① 年度別 ----------
+  function mockTitle(y) {
+    y = String(y);
+    return y.charAt(y.length - 1) === "p" ? y.slice(0, 4) + "年 プラス" : y + "年度";
+  }
   function mockBest(y) {
     var ms = (prof().mocks || []).filter(function (m) { return m.year === y; });
     if (!ms.length) return null;
@@ -376,9 +380,12 @@
       var b;
       if (isMock) {
         var best = mockBest(yy.y);
-        b = el('<button class="year-card"><div class="y">' + yy.y + '年度</div><div class="y-style">本番形式模試 37問・100点</div><div class="y-best">' + (best === null ? '<span class="muted">未挑戦</span>' : "最高 <b>" + best + "点</b>") + "</div></button>");
+        var isPlus = !!yy.plus;
+        var yLabel = isPlus ? (String(yy.y).slice(0, 4) + '年 <span style="color:#c0392b;font-weight:800">＋難化</span>') : (yy.y + '年度');
+        var styleLabel = isPlus ? '本番レベル難化版 37問・100点' : '本番形式模試 37問・100点';
+        b = el('<button class="year-card"><div class="y">' + yLabel + '</div><div class="y-style">' + styleLabel + '</div><div class="y-best">' + (best === null ? '<span class="muted">未挑戦</span>' : "最高 <b>" + best + "点</b>") + "</div></button>");
         b.addEventListener("click", function () {
-          if (confirm(yy.y + "年度 本番形式模試を始めます。\n・37問/100点満点(約30分)\n・第1・2問は2回まで、第3問以降は1回しか再生できません(本番と同じ)\n・静かな場所で、メモ用紙を用意して始めるのがおすすめです")) startMock(yy.y);
+          if (confirm(mockTitle(yy.y) + " 本番形式模試を始めます。\n・37問/100点満点(約30分)\n・第1・2問は2回まで、第3問以降は1回しか再生できません(本番と同じ)\n・静かな場所で、メモ用紙を用意して始めるのがおすすめです")) startMock(yy.y);
         });
       } else {
         var best2 = yearBest(yy.y);
@@ -450,7 +457,7 @@
     var p = prof();
     var endNo = blk.startNo + blk.questions.length - 1;
     var card = el('<div class="card"></div>');
-    card.appendChild(el('<div class="q-progress">' + session.year + "年度模試 【" + esc(blk.sec) + " 問" + blk.startNo + (endNo > blk.startNo ? "〜" + endNo : "") + " / 全" + session.totalQ + "問】</div>"));
+    card.appendChild(el('<div class="q-progress">' + mockTitle(session.year) + "模試 【" + esc(blk.sec) + " 問" + blk.startNo + (endNo > blk.startNo ? "〜" + endNo : "") + " / 全" + session.totalQ + "問】</div>"));
     if (blk.intro) card.appendChild(el('<div class="sec-intro">' + esc(blk.intro) + "</div>"));
 
     // プレーヤー(再生回数制限つき)
@@ -585,7 +592,7 @@
         : score >= 50 ? "共通テストの平均点前後です。配点の大きい第1・2問(計41点)を確実に取る練習から始めよう。"
           : "まずは第1・2問(2回聞ける問題・計41点)を得点源に。形式別演習でゆっくり型を身につけてから再挑戦を。";
     var card = el(
-      '<div class="card center"><h2>📋 ' + session.year + "年度 本番形式模試の結果</h2>" +
+      '<div class="card center"><h2>📋 ' + mockTitle(session.year) + " 本番形式模試の結果</h2>" +
       '<div class="result-big">' + score + " <span style='font-size:1rem'>/ 100点</span></div>" +
       '<div class="small">所要時間: 約' + mins + "分</div>" +
       '<p class="small mt12">' + msg + "</p></div>"
@@ -864,7 +871,7 @@
     } else {
       mocks.slice(0, 15).forEach(function (m) {
         var d = new Date(m.t);
-        mc.appendChild(el('<div class="log-item"><span class="log-date">' + (d.getMonth() + 1) + "/" + d.getDate() + "</span> " + m.year + "年度 — <b>" + m.score + "点</b> / 100点</div>"));
+        mc.appendChild(el('<div class="log-item"><span class="log-date">' + (d.getMonth() + 1) + "/" + d.getDate() + "</span> " + mockTitle(m.year) + " — <b>" + m.score + "点</b> / 100点</div>"));
       });
     }
     main.appendChild(mc);
